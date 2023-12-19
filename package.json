@@ -1,0 +1,36 @@
+{
+  "name": "nabladown-server",
+  "version": "1.0.0",
+  "author": "Pedroth",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pedroth/nabladown-server.git"
+  },
+  "main": "./index.js",
+  "devDependencies": {
+    "commander": "^11.1.0",
+    "eslint": "^8.50.0",
+    "express": "^4.18.2",
+    "http": "^0.0.1-security",
+    "ws": "^8.15.1"
+  },
+  "bugs": {
+    "url": "https://github.com/pedroth/jsLib/issues"
+  },
+  "description": "Template for js libraries with webpack",
+  "homepage": "https://github.com/pedroth/jsLib#readme",
+  "keywords": [
+    "javascript",
+    "nabladown",
+    "server"
+  ],
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "bun index.js",
+    "test": "bun test",
+    "build": "bun run clean; bun bundle.js",
+    "buildDev": "bun bundle.js --watch",
+    "clean": "rm -rf node_modules; rm -rf dist;"
+  },
+  "type": "module"
+}
