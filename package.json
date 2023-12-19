@@ -7,9 +7,7 @@
     "url": "git+https://github.com/pedroth/nabladown-server.git"
   },
   "main": "./index.js",
-  "bin": {
-    "nabladown-server": "./index.js"
-  },
+  "bin": "./index.js",
   "devDependencies": {
     "commander": "^11.1.0",
     "eslint": "^8.50.0",
