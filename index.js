@@ -55,7 +55,6 @@ class Server {
   constructor(httpActions, wsActions) {
     this.app = express();
     this.server = http.createServer(this.app);
-    // this.app.get("/", (req, res) => res.send(getBaseHtml("Hello world!")));
     httpActions.forEach(({ path, regex, handler }) => {
       if (path) this.app.get(path, handler);
       if (regex) this.app.get(regex, handler);
@@ -89,7 +88,6 @@ class Server {
       return { regex, handler, wss };
     })
     this.server.on("upgrade", (request, socket, head) => {
-      // connect simple path websocket
       const pathname = getPathFromURL(request.url);
       if (pathname in this.path2WebSocketValues) {
         const { wss } = this.path2WebSocketValues[pathname];
@@ -177,7 +175,7 @@ async function serveListOfFiles(_, res) {
 }
 
 function serveNdFile(req, res) {
-  const fileName = req.params.fileName;
+  const fileName = req.url;
   res.send(getBaseHtml(
     fileName,
     `

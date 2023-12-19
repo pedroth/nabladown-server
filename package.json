@@ -7,6 +7,9 @@
     "url": "git+https://github.com/pedroth/nabladown-server.git"
   },
   "main": "./index.js",
+  "bin": {
+    "nabladown-server": "./index.js"
+  },
   "devDependencies": {
     "commander": "^11.1.0",
     "eslint": "^8.50.0",
@@ -17,7 +20,7 @@
   "bugs": {
     "url": "https://github.com/pedroth/jsLib/issues"
   },
-  "description": "Template for js libraries with webpack",
+  "description": "Hot reloading nabladown files",
   "homepage": "https://github.com/pedroth/jsLib#readme",
   "keywords": [
     "javascript",
