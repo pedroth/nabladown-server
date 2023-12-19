@@ -1,4 +1,4 @@
-import http from "http";
+import { createServer } from "http";
 import express from "express";
 import { Command } from "commander";
 import { WebSocketServer } from 'ws';
@@ -54,7 +54,7 @@ function getPathFromURL(url) {
 class Server {
   constructor(httpActions, wsActions) {
     this.app = express();
-    this.server = http.createServer(this.app);
+    this.server = createServer(this.app);
     httpActions.forEach(({ path, regex, handler }) => {
       if (path) this.app.get(path, handler);
       if (regex) this.app.get(regex, handler);

@@ -8,8 +8,8 @@
   },
   "main": "./index.js",
   "bin": {
-    "nd-server": "./index.js",
-    "nabladown-server": "./index.js"
+    "nd-server": "./nd-server",
+    "nabladown-server": "./nd-server"
   },
   "dependencies": {
     "commander": "^11.1.0",
@@ -32,6 +32,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "start": "bun index.js",
+    "build": "bun build ./index.js --compile --outfile nd-server",
     "test": "bun test",
     "clean": "rm -rf node_modules;",
     "pub": "npm version patch; npm publish"
