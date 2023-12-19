@@ -3,7 +3,6 @@ import express from "express";
 import { Command } from "commander";
 import { WebSocketServer } from 'ws';
 import { readdir, readFile } from "fs/promises";
-import { watch } from "fs";
 //========================================================================================
 /*                                                                                      *
  *                                         UTILS                                        *
@@ -235,19 +234,20 @@ const hotReloadListOfFiles = async ws => {
 const hotReloadFile = async (ws, request) => {
   const fileName = request.url.split("/").at(-1);
   if (!fileName) return;
+
+  // first render
+  let fileContent = await readFile(`./${fileName}`, { encoding: "utf8" });
+  ws.send(fileContent);
+
   // hot reloading
-  const watcher = watch(
-    `./${fileName}`,
-    async () => {
-      console.log("On change file", fileName);
-      const fileContent = await readFile(`./${fileName}`, { encoding: "utf8" });
+  const id = setInterval(async () => {
+    const newFileContent = await readFile(`./${fileName}`, { encoding: "utf8" });
+    if (newFileContent !== fileContent) {
+      fileContent = newFileContent;
       ws.send(fileContent);
     }
-  );
-  // first render
-  const fileContent = await readFile(`./${fileName}`, { encoding: "utf8" });
-  ws.send(fileContent);
-  return () => watcher.close();
+  }, 100)
+  return () => clearInterval(id);
 }
 
 //========================================================================================

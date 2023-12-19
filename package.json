@@ -21,16 +21,16 @@
   "homepage": "https://github.com/pedroth/jsLib#readme",
   "keywords": [
     "javascript",
-    "nabladown",
-    "server"
+    "nabladown.js",
+    "server",
+    "hot-reload"
   ],
   "license": "Apache-2.0",
   "scripts": {
     "start": "bun index.js",
     "test": "bun test",
-    "build": "bun run clean; bun bundle.js",
-    "buildDev": "bun bundle.js --watch",
-    "clean": "rm -rf node_modules; rm -rf dist;"
+    "clean": "rm -rf node_modules;",
+    "pub": "npm version patch; npm publish"
   },
   "type": "module"
 }
