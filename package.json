@@ -1,13 +1,16 @@
 {
   "name": "nabladown-server",
-  "version": "1.0.3",
+  "version": "1.0.1",
   "author": "Pedroth",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pedroth/nabladown-server.git"
   },
   "main": "./index.js",
-  "bin": "./index.js",
+  "bin": {
+    "nd-server": "./index.js",
+    "nabladown-server": "./index.js"
+  },
   "dependencies": {
     "commander": "^11.1.0",
     "eslint": "^8.50.0",
