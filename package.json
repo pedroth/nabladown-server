@@ -8,7 +8,7 @@
   },
   "main": "./index.js",
   "bin": "./index.js",
-  "devDependencies": {
+  "dependencies": {
     "commander": "^11.1.0",
     "eslint": "^8.50.0",
     "express": "^4.18.2",
