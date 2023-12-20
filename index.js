@@ -4,9 +4,9 @@ import express from "express";
 import { Command } from "commander";
 import { WebSocketServer } from 'ws';
 import { readdir, readFile } from "fs/promises";
-import { URL } from 'url';
+import { cwd } from "process";
 
-const __dirname = new URL('.', import.meta.url).pathname;
+const __dirname = cwd();
 console.log("Running on:", __dirname);
 //========================================================================================
 /*                                                                                      *
