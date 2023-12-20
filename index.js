@@ -74,6 +74,10 @@ function getBaseHtml(title, script) {
             font-family: sans-serif;
           }
 
+          article {
+            padding-bottom: 50px;
+          }
+
           #root {
             opacity: 1;
             transition: opacity var(--fast-transition) ease-in-out;
@@ -142,7 +146,7 @@ function getBaseHtml(title, script) {
     </script>
     <script type="module">
         ${script}
-    </script> 
+    </script>
   </html>
  `
 }
