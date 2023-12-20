@@ -1,4 +1,3 @@
-import { createServer } from "http";
 import express from "express";
 import { Command } from "commander";
 import { WebSocketServer } from 'ws';
@@ -54,7 +53,6 @@ function getPathFromURL(url) {
 class Server {
   constructor(httpActions, wsActions) {
     this.app = express();
-    this.server = createServer(this.app);
     httpActions.forEach(({ path, regex, handler }) => {
       if (path) this.app.get(path, handler);
       if (regex) this.app.get(regex, handler);
@@ -87,7 +85,7 @@ class Server {
       })
       return { regex, handler, wss };
     })
-    this.server.on("upgrade", (request, socket, head) => {
+    this.websocketUpgrade = server => server.on("upgrade", (request, socket, head) => {
       const pathname = getPathFromURL(request.url);
       if (pathname in this.path2WebSocketValues) {
         const { wss } = this.path2WebSocketValues[pathname];
@@ -106,10 +104,10 @@ class Server {
   }
 
   start(port) {
-    if (!this.server) throw new Error("Server not defined");
-    this.server.listen(port, () => {
+    const server = this.app.listen(port, () => {
       console.log(`Server is running on http://localhost:${port}`);
     });
+    this.websocketUpgrade(server);
   }
 
   static builder() {
