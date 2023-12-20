@@ -207,12 +207,14 @@ function serveNdFile(req, res) {
 
 const hotReloadListOfFiles = async ws => {
   // first render
-  let files = (await readdir("./")).filter(isNdFile);
+  // eslint-disable-next-line no-undef
+  let files = (await readdir(__dirname)).filter(isNdFile);
   ws.send(files.sort());
 
   // hot reloading, node-watch not working
   const id = setInterval(async () => {
-    const newFiles = (await readdir("./"))
+    // eslint-disable-next-line no-undef
+    const newFiles = (await readdir(__dirname))
       .filter(isNdFile)
       .sort()
     if (
@@ -234,12 +236,14 @@ const hotReloadFile = async (ws, request) => {
   if (!fileName) return;
 
   // first render
-  let fileContent = await readFile(`./${fileName}`, { encoding: "utf8" });
+  // eslint-disable-next-line no-undef
+  let fileContent = await readFile(`${__dirname}/${fileName}`, { encoding: "utf8" });
   ws.send(fileContent);
 
   // hot reloading
   const id = setInterval(async () => {
-    const newFileContent = await readFile(`./${fileName}`, { encoding: "utf8" });
+    // eslint-disable-next-line no-undef
+    const newFileContent = await readFile(`${__dirname}/${fileName}`, { encoding: "utf8" });
     if (newFileContent !== fileContent) {
       fileContent = newFileContent;
       ws.send(fileContent);
