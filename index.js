@@ -4,6 +4,9 @@ import express from "express";
 import { Command } from "commander";
 import { WebSocketServer } from 'ws';
 import { readdir, readFile } from "fs/promises";
+import { URL } from 'url';
+
+const __dirname = new URL('.', import.meta.url).pathname;
 //========================================================================================
 /*                                                                                      *
  *                                         UTILS                                        *
@@ -207,13 +210,11 @@ function serveNdFile(req, res) {
 
 const hotReloadListOfFiles = async ws => {
   // first render
-  // eslint-disable-next-line no-undef
   let files = (await readdir(__dirname)).filter(isNdFile);
   ws.send(files.sort());
 
   // hot reloading, node-watch not working
   const id = setInterval(async () => {
-    // eslint-disable-next-line no-undef
     const newFiles = (await readdir(__dirname))
       .filter(isNdFile)
       .sort()
@@ -237,13 +238,11 @@ const hotReloadFile = async (ws, request) => {
   fileName = decodeURI(fileName);
 
   // first render
-  // eslint-disable-next-line no-undef
   let fileContent = await readFile(`${__dirname}/${fileName}`, { encoding: "utf8" });
   ws.send(fileContent);
 
   // hot reloading
   const id = setInterval(async () => {
-    // eslint-disable-next-line no-undef
     const newFileContent = await readFile(`${__dirname}/${fileName}`, { encoding: "utf8" });
     if (newFileContent !== fileContent) {
       fileContent = newFileContent;
