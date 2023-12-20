@@ -14,7 +14,7 @@ You can also use `bunx`
 
 `bunx nabladown-server`
 
-> If there is some error try to install it first globally using `bun i -g nabladown-server`
+> If there is some error try to install it globally using `bun i -g nabladown-server`, and then try again.
 
 # Advanced 
 
