@@ -215,7 +215,7 @@ const hotReloadListOfFiles = async ws => {
 
   // first render
   let files = await reloadList();
-  console.log(">>>>>>>>>>>", (await readdir(path.join(__dirname, "/"))).filter(isNdFile).sort());
+  console.log(">>>>>>>>>>>", files);
   ws.send(files);
 
   // hot reloading, node-watch not working
