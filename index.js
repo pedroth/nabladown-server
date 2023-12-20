@@ -211,13 +211,11 @@ function serveNdFile(req, res) {
 }
 
 const hotReloadListOfFiles = async ws => {
-  const reloadList = async () => {
-    console.log(">>>>>>>>>>>", (await readdir(path.join(__dirname, "/"))).filter(isNdFile).sort());
-    return (await readdir(path.join(__dirname, "/"))).filter(isNdFile).sort()
-  };
+  const reloadList = async () => (await readdir(path.join(__dirname, "/"))).filter(isNdFile).sort();
 
   // first render
   let files = await reloadList();
+  console.log(">>>>>>>>>>>", (await readdir(path.join(__dirname, "/"))).filter(isNdFile).sort());
   ws.send(files);
 
   // hot reloading, node-watch not working
