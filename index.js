@@ -226,7 +226,7 @@ const hotReloadListOfFiles = async ws => {
     ) {
       console.log("Files changed", newFiles);
       files = newFiles;
-      ws.send(files.join("."));
+      ws.send(files.join(","));
     }
   }, 100);
 
