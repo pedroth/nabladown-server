@@ -7,6 +7,7 @@ import { readdir, readFile } from "fs/promises";
 import { URL } from 'url';
 
 const __dirname = new URL('.', import.meta.url).pathname;
+console.log("Running on:", __dirname);
 //========================================================================================
 /*                                                                                      *
  *                                         UTILS                                        *
