@@ -216,7 +216,11 @@ const hotReloadListOfFiles = async ws => {
   // first render
   let files = await reloadList();
   console.log(">>>>>>>>>>>", files);
-  ws.send(files);
+  try {
+    ws.send(files);
+  } catch (e) {
+    console.log("Caught exception while sending data", e)
+  }
 
   // hot reloading, node-watch not working
   const id = setInterval(async () => {
