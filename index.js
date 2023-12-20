@@ -211,7 +211,7 @@ function serveNdFile(req, res) {
 }
 
 const hotReloadListOfFiles = async ws => {
-  const reloadList = async () => (await readdir(path.join(__dirname))).filter(isNdFile).sort();
+  const reloadList = async () => (await readdir(path.join(__dirname, "/"))).filter(isNdFile).sort();
 
   // first render
   let files = await reloadList();
@@ -238,7 +238,7 @@ const hotReloadFile = async (ws, request) => {
   if (!fileName) return;
   fileName = decodeURI(fileName);
 
-  const reloadFile = () => readFile(path.join(__dirname, fileName), { encoding: "utf8" });
+  const reloadFile = () => readFile(path.join(__dirname, "/" + fileName), { encoding: "utf8" });
 
   // first render
   let fileContent = await reloadFile();
