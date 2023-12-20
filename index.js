@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 import express from "express";
 import { Command } from "commander";
 import { WebSocketServer } from 'ws';
