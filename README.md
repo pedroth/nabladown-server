@@ -16,5 +16,12 @@ You can also use `bunx`
 
 > If there is some error try to install it first globally using `bun i -g nabladown-server`
 
+# Advanced 
+
+It is possible to change the port:
+
+`npx nabladown-server -p 8080`
+
+The command above will run the server in the port `8080`.
 
 [nabla]: https://pedroth.github.io/nabladown.js

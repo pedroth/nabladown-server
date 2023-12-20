@@ -215,7 +215,6 @@ const hotReloadListOfFiles = async ws => {
 
   // first render
   let files = await reloadList();
-  console.log(">>>>>>>>>>>", files);
   ws.send(files.join(","));
 
   // hot reloading, node-watch not working
@@ -227,7 +226,7 @@ const hotReloadListOfFiles = async ws => {
     ) {
       console.log("Files changed", newFiles);
       files = newFiles;
-      ws.send(files);
+      ws.send(files.join("."));
     }
   }, 100);
 
