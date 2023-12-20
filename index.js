@@ -5,6 +5,7 @@ import { Command } from "commander";
 import { WebSocketServer } from 'ws';
 import { readdir, readFile } from "fs/promises";
 import { cwd } from "process";
+import path from "path";
 
 const __dirname = cwd();
 console.log("Running on:", __dirname);
@@ -210,15 +211,15 @@ function serveNdFile(req, res) {
 }
 
 const hotReloadListOfFiles = async ws => {
+  const reloadList = async () => (await readdir(path.join(__dirname))).filter(isNdFile).sort();
+
   // first render
-  let files = (await readdir(__dirname)).filter(isNdFile);
-  ws.send(files.sort());
+  let files = await reloadList();
+  ws.send(files);
 
   // hot reloading, node-watch not working
   const id = setInterval(async () => {
-    const newFiles = (await readdir(__dirname))
-      .filter(isNdFile)
-      .sort()
+    const newFiles = await reloadList();
     if (
       newFiles.length !== files.length ||
       newFiles.map((f, i) => f === files[i]).some(x => !x)
@@ -227,7 +228,6 @@ const hotReloadListOfFiles = async ws => {
       files = newFiles;
       ws.send(files);
     }
-
   }, 100);
 
   return () => clearInterval(id);
@@ -238,13 +238,15 @@ const hotReloadFile = async (ws, request) => {
   if (!fileName) return;
   fileName = decodeURI(fileName);
 
+  const reloadFile = () => readFile(path.join(__dirname, fileName), { encoding: "utf8" });
+
   // first render
-  let fileContent = await readFile(`${__dirname}/${fileName}`, { encoding: "utf8" });
+  let fileContent = await reloadFile();
   ws.send(fileContent);
 
   // hot reloading
   const id = setInterval(async () => {
-    const newFileContent = await readFile(`${__dirname}/${fileName}`, { encoding: "utf8" });
+    const newFileContent = await reloadFile();
     if (newFileContent !== fileContent) {
       fileContent = newFileContent;
       ws.send(fileContent);
