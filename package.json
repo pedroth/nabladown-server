@@ -6,17 +6,17 @@
     "type": "git",
     "url": "git+https://github.com/pedroth/nabladown-server.git"
   },
+  "type": "module",
   "main": "./index.js",
-  "bin": {
-    "nd-server": "./nd-server",
-    "nabladown-server": "./nd-server"
-  },
+  "bin": "index.js",
   "dependencies": {
     "commander": "^11.1.0",
-    "eslint": "^8.50.0",
     "express": "^4.18.2",
     "http": "^0.0.1-security",
     "ws": "^8.15.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.50.0"
   },
   "bugs": {
     "url": "https://github.com/pedroth/jsLib/issues"
@@ -34,8 +34,7 @@
     "start": "bun index.js",
     "build": "bun build ./index.js --compile --outfile nd-server",
     "test": "bun test",
-    "clean": "rm -rf node_modules;",
+    "clean": "rm -rf node_modules; rm -rf nd-server",
     "pub": "npm version patch; npm publish"
-  },
-  "type": "module"
+  }
 }
