@@ -232,8 +232,9 @@ const hotReloadListOfFiles = async ws => {
 }
 
 const hotReloadFile = async (ws, request) => {
-  const fileName = request.url.split("/").at(-1);
+  let fileName = request.url.split("/").at(-1);
   if (!fileName) return;
+  fileName = decodeURI(fileName);
 
   // first render
   // eslint-disable-next-line no-undef
