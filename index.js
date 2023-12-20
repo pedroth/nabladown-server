@@ -211,7 +211,10 @@ function serveNdFile(req, res) {
 }
 
 const hotReloadListOfFiles = async ws => {
-  const reloadList = async () => (await readdir(path.join(__dirname, "/"))).filter(isNdFile).sort();
+  const reloadList = async () => {
+    console.log(">>>>>>>>>>>", (await readdir(path.join(__dirname, "/"))).filter(isNdFile).sort());
+    return (await readdir(path.join(__dirname, "/"))).filter(isNdFile).sort()
+  };
 
   // first render
   let files = await reloadList();
