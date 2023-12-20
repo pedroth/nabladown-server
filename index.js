@@ -28,20 +28,46 @@ function getBaseHtml(title, script) {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${title}</title>
       <style>
+          :root {
+            --background-color: rgb(24, 24, 24);
+            --text-color: rgba(255, 255, 255, 0.9);
+            --fast-transition: 0.3s;
+            --faster-transition: 0.1s;
+          }
+
+          html {
+            height: 100vh;
+            width: 100vw;
+          }
+    
           body {
-            background: black;
-            color: white;
-            font-family: system-ui;
-            margin: auto;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-size: 1.25rem;
+            font-weight: 400;
+            overflow-x: hidden;
+            /* transition: all var(--fast-transition) ease-in-out; */
+            font-family: sans-serif;
+          }
+
+          #root {
+            opacity: 1;
+            transition: opacity var(--fast-transition) ease-in-out;
+            margin-left: auto;
+            margin-right: auto;
+            height: 100%;
+            max-width: 1080px;
+            min-width: 333px;
           }
       </style>
     </head>
     <body>
-      
+      <div id="root">
+      </div>
     </body>
     <script type="module">
         ${script}
-      </script>   
+    </script>   
   </html>
  `
 }
@@ -164,7 +190,8 @@ async function serveListOfFiles(_, res) {
         ws.addEventListener('message', async event => {
           console.log("Got message", event.data);
           const files = event.data.split(",");
-          document.body.innerHTML = \`
+          document.getElementById("root").innerHTML = \`
+          <h2> Nabladown files in <i>${__dirname}</i> </h2>
           <ul>
             \${files.map(file => \`<li><a href="\${file}">\${file}</a></li>\`).join("\\n")}
           </ul>
@@ -186,12 +213,35 @@ function serveNdFile(req, res) {
     `
       import { parse, render } from "https://cdn.jsdelivr.net/npm/nabladown.js/dist/web/index.js";
       const ws = new WebSocket(\`ws://\${window.location.host}\${window.location.pathname}\`);
+
+      const NablaLocalStorage = (() => {
+        const namespace = "nabladown-server";
+        return {
+          getItem: key => {
+            const ls = localStorage.getItem(namespace) || "{}";
+            return JSON.parse(ls)[key];
+          },
+          setItem: (key, value) => {
+            const ls = JSON.parse(localStorage.getItem(namespace)) || {};
+            ls[key] = value;
+            localStorage.setItem(namespace, JSON.stringify(ls));
+            return this;
+          }
+        };
+      })();
+
+      document.addEventListener("scroll", e => {
+        NablaLocalStorage.setItem("scroll", document.documentElement.scrollTop);
+      });
+
       ws.addEventListener('open', event => {
         console.log('Connected to the WebSocket server');
         
         ws.addEventListener('message', async event => {
           console.log("Got message", event.data);
-          const body = document.body;
+          const previousScroll = NablaLocalStorage.getItem("scroll");
+
+          const body = document.getElementById("root");
           while (body.firstChild) {
             body.removeChild(body.firstChild);
           }
@@ -200,6 +250,7 @@ function serveNdFile(req, res) {
               parse(event.data)
             )
           );
+          document.documentElement.scrollTop = previousScroll;
         });
         
         ws.addEventListener('close', event => {
@@ -251,7 +302,7 @@ const hotReloadFile = async (ws, request) => {
       fileContent = newFileContent;
       ws.send(fileContent);
     }
-  }, 100)
+  }, 0)
   return () => clearInterval(id);
 }
 
