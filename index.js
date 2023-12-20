@@ -217,7 +217,7 @@ const hotReloadListOfFiles = async ws => {
   let files = await reloadList();
   console.log(">>>>>>>>>>>", files);
   try {
-    ws.send(files);
+    ws.send("pedro, tiago");
   } catch (e) {
     console.log("Caught exception while sending data", e)
   }
