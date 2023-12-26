@@ -400,7 +400,7 @@ const hotReloadListOfFiles = async ws => {
       files = newFiles;
       ws.send(files.join(","));
     }
-  }, 100000);
+  }, 100);
 
   return () => clearInterval(id);
 }
