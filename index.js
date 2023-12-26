@@ -3,7 +3,8 @@
 import express from "express";
 import { Command } from "commander";
 import { WebSocketServer } from 'ws';
-import { readdir, readFile } from "fs/promises";
+import { readFile } from "fs/promises";
+import { readdirSync } from "fs";
 import { cwd } from "process";
 import path from "path";
 
@@ -15,8 +16,24 @@ console.log("Running on:", __dirname);
  *                                                                                      */
 //========================================================================================
 
-function isNdFile(filename) {
-  return filename.split(".nd").length > 1;
+function isNdFile(fileObj) {
+  if (fileObj.children.length === 0) return fileObj.name.split(".nd").length > 1
+  return fileObj.children.some(isNdFile);
+}
+
+function readFilesNames(dir = "/", level = 3) {
+  if (level === 0) return [];
+  return readdirSync(path.join(__dirname, dir), { withFileTypes: true })
+    .filter(f => !f.name.match(/^\..*/))
+    .map(f => {
+      return {
+        src: dir + f.name,
+        name: f.name,
+        children: !f.isDirectory() ?
+          [] :
+          readFilesNames(dir + f.name + "/", level - 1)
+      };
+    });
 }
 
 const light_mode_svg = `
@@ -282,18 +299,31 @@ async function serveListOfFiles(_, res) {
       `
       ${LOCAL_STORAGE}
 
+
+      function createFoldersList(filesStruct) {
+        return \`
+        <ul>
+        \${
+          filesStruct
+          .map(file => 
+            file.children.length === 0 ? 
+            \`<li><a href="\${file.src}">\${file.name}</a></li>\` :
+              \`<li> \${file.name} \${createFoldersList(file.children)} </li>\`  )
+          .join("\\n")
+          }
+        </ul>\`
+      }
+
       const ws = new WebSocket(\`ws://\${window.location.host}\`);
       ws.addEventListener('open', event => {
         console.log('Connected to the WebSocket server');
         
         ws.addEventListener('message', async event => {
           console.log("Got message", event.data);
-          const files = event.data.split(",");
+          const filesStruct = JSON.parse(event.data);
           document.getElementById("root").innerHTML = \`
           <h2> Nabladown files in <i>${__dirname}</i> </h2>
-          <ul>
-            \${files.map(file => \`<li><a href="\${file}">\${file}</a></li>\`).join("\\n")}
-          </ul>
+          \${createFoldersList(filesStruct)}
           \`;
         });
         
@@ -346,12 +376,18 @@ function serveNdFile(req, res) {
   ))
 }
 
+
 const hotReloadListOfFiles = async ws => {
-  const reloadList = async () => (await readdir(path.join(__dirname, "/"))).filter(isNdFile).sort();
+  const reloadList = async (dir = "/") => readFilesNames(dir)
+    .filter(isNdFile)
+    .sort()
 
   // first render
   let files = await reloadList();
-  ws.send(files.join(","));
+
+  Promise.all(files).then(fs => {
+    ws.send(JSON.stringify(fs));
+  })
 
   // hot reloading, node-watch not working
   const id = setInterval(async () => {
@@ -364,17 +400,17 @@ const hotReloadListOfFiles = async ws => {
       files = newFiles;
       ws.send(files.join(","));
     }
-  }, 100);
+  }, 100000);
 
   return () => clearInterval(id);
 }
 
 const hotReloadFile = async (ws, request) => {
-  let fileName = request.url.split("/").at(-1);
+  let fileName = request.url;
   if (!fileName) return;
   fileName = decodeURI(fileName);
 
-  const reloadFile = () => readFile(path.join(__dirname, "/" + fileName), { encoding: "utf8" });
+  const reloadFile = () => readFile(path.join(__dirname, fileName), { encoding: "utf8" });
 
   // first render
   let fileContent = await reloadFile();
