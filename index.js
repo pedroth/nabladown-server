@@ -394,11 +394,11 @@ const hotReloadListOfFiles = async ws => {
     const newFiles = await reloadList();
     if (
       newFiles.length !== files.length ||
-      newFiles.map((f, i) => f === files[i]).some(x => !x)
+      newFiles.map((f, i) => f.src === files[i].src).some(x => !x)
     ) {
       console.log("Files changed", newFiles);
       files = newFiles;
-      ws.send(files.join(","));
+      ws.send(JSON.stringify(files));
     }
   }, 100);
 
