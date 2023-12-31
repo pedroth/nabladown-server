@@ -72,6 +72,7 @@ function getBaseHtml(title, script) {
           :root {
             --background-color: rgb(24, 24, 24);
             --text-color: rgba(255, 255, 255, 0.9);
+            --link-color: rgba(31, 111, 235, 1);
             --fast-transition: 0.3s;
             --faster-transition: 0.1s;
           }
@@ -89,6 +90,10 @@ function getBaseHtml(title, script) {
             overflow-x: hidden;
             /* transition: all var(--fast-transition) ease-in-out; */
             font-family: sans-serif;
+          }
+
+          a:link {
+            color: var(--link-color);
           }
 
           article {
@@ -298,7 +303,6 @@ async function serveListOfFiles(_, res) {
       "List of Nabladown files",
       `
       ${LOCAL_STORAGE}
-
 
       function createFoldersList(filesStruct) {
         return \`

@@ -12,6 +12,9 @@ Simplest way to run this is to use `npx`:
 
 Then open browser at `http://localhost:3000`. It will display a list of all `.nd` files, in the folder where the first command was ran.
 
+Then use any editor to change your files.
+
+## Using bun
 You can also use `bunx`
 
 `bunx nabladown-server`
@@ -28,8 +31,8 @@ The command above will run the server in the port `8080`.
 
 [nabla]: https://pedroth.github.io/nabladown.js
 
-
 # TODO
 
+- Adding custom css
 - Create browser editor
 - Using custom nabladown render
