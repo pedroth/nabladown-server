@@ -377,6 +377,13 @@ function serveNdFile(req, res) {
 }
 
 
+async function serveStatic(req, res) {
+  const fileName = req.url;
+  const file = await readFile(path.join(__dirname, fileName))
+  res.send(file);
+}
+
+
 const hotReloadListOfFiles = async ws => {
   const reloadList = async (dir = "/") => readFilesNames(dir)
     .filter(isNdFile)
@@ -433,6 +440,9 @@ const hotReloadFile = async (ws, request) => {
  *                                                                                      */
 //========================================================================================
 
+const MEDIA_FILES_REGEX = /.*\.(png|jpg|jpeg|webp|gif|svg|bmp|tiff|tif|mp4|webm|ogv|ogg)$/
+
+
 const program = new Command();
 program
   .name('nabladown-server')
@@ -445,6 +455,7 @@ program.option("-p, --port <number>", "port number", 3000)
       .wsAction({ path: "/", handler: hotReloadListOfFiles })
       .httpAction({ regex: /.*\.nd$/, handler: serveNdFile })
       .wsAction({ regex: /.*\.nd$/, handler: hotReloadFile })
+      .httpAction({ regex: MEDIA_FILES_REGEX, handler: serveStatic })
       .build()
       .start(port)
   })
