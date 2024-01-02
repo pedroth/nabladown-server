@@ -31,8 +31,17 @@ The command above will run the server in the port `8080`.
 
 [nabla]: https://pedroth.github.io/nabladown.js
 
+## Offline mode
+
+By running `bun run build`, an executable `nd-server` will be built. Running it, with a folder called `public` (that was also generated) will allow the user to view `.nd` files without internet.
+
+There are a few limitations:
+ - `nabladown.js` is not totally independent of internet, hence there will be some limitations in its rendering (i.e the formulas will not work properly)
+ - It needs the `public` folder
+
 # TODO
 
 - Adding custom css
 - Create browser editor
 - Using custom nabladown render
+- Add offline mode
