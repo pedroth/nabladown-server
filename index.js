@@ -205,6 +205,8 @@ function getPathFromURL(url) {
 class Server {
   constructor(httpActions, wsActions) {
     this.app = express();
+    this.app.use(express.static("public"));
+
     httpActions.forEach(({ path, regex, handler }) => {
       if (path) this.app.get(path, handler);
       if (regex) this.app.get(regex, handler);
@@ -344,36 +346,48 @@ function serveNdFile(req, res) {
   res.send(getBaseHtml(
     fileName,
     `
-      import { parse, render } from "https://cdn.jsdelivr.net/npm/nabladown.js/dist/web/index.js";
+      async function importNabla() {
+        try {
+          const { parse, render } = await import("https://cdn.jsdelivr.net/npm/nabladown.js/dist/web/index.js");
+          return { parse, render };
+        } catch(error) {
+          const { parse, render } = await import("/dist/web/index.js");
+          return { parse, render };
+        }       
+      }
       
       ${LOCAL_STORAGE}
-            
-      document.addEventListener("scroll", e => {
-        NablaLocalStorage.setItem("scroll", document.documentElement.scrollTop);
-      });
-      
-      const ws = new WebSocket(\`ws://\${window.location.host}\${window.location.pathname}\`);
-      ws.addEventListener('open', event => {
-        console.log('Connected to the WebSocket server');
-        
-        ws.addEventListener('message', async event => {
-          console.log("Got message", event.data);
-          const previousScroll = NablaLocalStorage.getItem("scroll");
 
-          const body = document.getElementById("root");
-          while (body.firstChild) {
-            body.removeChild(body.firstChild);
-          }
-          body.appendChild(
-            await render(
-              parse(event.data)
-            )
-          );
-          document.documentElement.scrollTop = previousScroll;
+
+      importNabla().then(({ parse, render }) => {
+
+        document.addEventListener("scroll", e => {
+          NablaLocalStorage.setItem("scroll", document.documentElement.scrollTop);
         });
         
-        ws.addEventListener('close', event => {
-          console.log('Disconnected from the WebSocket server');
+        const ws = new WebSocket(\`ws://\${window.location.host}\${window.location.pathname}\`);
+        ws.addEventListener('open', event => {
+          console.log('Connected to the WebSocket server');
+          
+          ws.addEventListener('message', async event => {
+            console.log("Got message", event.data);
+            const previousScroll = NablaLocalStorage.getItem("scroll");
+  
+            const body = document.getElementById("root");
+            while (body.firstChild) {
+              body.removeChild(body.firstChild);
+            }
+            body.appendChild(
+              await render(
+                parse(event.data)
+              )
+            );
+            document.documentElement.scrollTop = previousScroll;
+          });
+          
+          ws.addEventListener('close', event => {
+            console.log('Disconnected from the WebSocket server');
+          });
         });
       });
       `

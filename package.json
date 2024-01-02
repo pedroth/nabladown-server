@@ -15,7 +15,8 @@
     "ws": "^8.15.1"
   },
   "devDependencies": {
-    "eslint": "^8.50.0"
+    "eslint": "^8.50.0",
+    "nabladown.js": "^2.0.27"
   },
   "bugs": {
     "url": "https://github.com/pedroth/jsLib/issues"
@@ -31,9 +32,9 @@
   "license": "Apache-2.0",
   "scripts": {
     "start": "bun index.js",
-    "build": "bun build ./index.js --compile --outfile nd-server",
+    "build": "bun run clean; bun i; cp -r node_modules/nabladown.js public/; bun build ./index.js --compile --outfile nd-server",
     "test": "bun test",
-    "clean": "rm -rf node_modules; rm -rf nd-server",
+    "clean": "rm -rf node_modules; rm -rf public/; rm -rf nd-server",
     "pub": "npm version patch; npm publish"
   }
 }

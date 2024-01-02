@@ -64,3 +64,5 @@ typings/
 
 # nabladown
 *.nd
+
+/public
