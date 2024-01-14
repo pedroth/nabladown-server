@@ -32,7 +32,8 @@
   "license": "Apache-2.0",
   "scripts": {
     "start": "bun index.js",
-    "build": "bun run clean; bun i; cp -r node_modules/nabladown.js public/; bun build ./index.js --compile --outfile nd-server",
+    "build": "bun run clean; bun i; cp -r node_modules/nabladown.js public/",
+    "buildExe": "bun build ./index.js --compile --outfile nd-server",
     "test": "bun test",
     "clean": "rm -rf node_modules; rm -rf public/; rm -rf nd-server",
     "pub": "npm version patch; npm publish"
