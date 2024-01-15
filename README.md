@@ -1,18 +1,18 @@
 # Nabladown server
 
-Nabladown server is a computer application that lets you view [nabladown][nabla] files, through a hot reloading.
+Nabladown server is a computer application that lets you view [nabladown][nabla] files, through a hot reloading server.
 
 ![](/nabla-server.webp)
 
-# Quickstart
+# Quick start
 
-Simplest way to run this is to use `npx`:
+The simplest way to run this is to use `npx` in a folder with [nabladown files][nabla]:
 
 `npx nabladown-server`
 
-Then open browser at `http://localhost:3000`. It will display a list of all `.nd` files, in the folder where the first command was ran.
+Then open browser at `http://localhost:3000`. It will display a list of all `.nd` files, in the folder where the first command was run.
 
-Then use any editor to change your files.
+Then use any editor to change your files. The documents will update accordingly.
 
 ## Using bun
 You can also use `bunx`
@@ -27,7 +27,7 @@ It is possible to change the port:
 
 `npx nabladown-server -p 8080`
 
-The command above will run the server in the port `8080`.
+The above command will run the server on port `8080`.
 
 [nabla]: https://pedroth.github.io/nabladown.js
 
@@ -36,3 +36,4 @@ The command above will run the server in the port `8080`.
 - Adding custom css
 - Create browser editor
 - Using custom nabladown render
+- Offline mode
