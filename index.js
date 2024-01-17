@@ -391,7 +391,11 @@ async function serveStatic(req, res) {
 const hotReloadListOfFiles = async ws => {
   const reloadList = async (dir = "/") => readFilesNames(dir)
     .filter(isNdFile)
-    .sort((a, b) => a.name < b.name ? 1 : a.name === b.name ? 0 : -1)
+    .sort((a, b) => {
+      const aName = (a.name || a).toLowerCase();
+      const bName = (b.name || b).toLowerCase();
+      return aName < bName ? -1 : aName > bName ? 1 : 0;
+    })
 
   // first render
   let files = await reloadList();
