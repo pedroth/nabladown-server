@@ -23,17 +23,23 @@ You can also use `bunx`
 
 # Advanced 
 
+## Change port
+
 It is possible to change the port:
 
 `npx nabladown-server -p 8080`
 
 The above command will run the server on port `8080`.
 
+## Add your style
+
+Just create an `index.css` file in your _root_ folder.
+
+
 [nabla]: https://pedroth.github.io/nabladown.js
 
 # TODO
 
-- Adding custom css
 - Create browser editor
 - Using custom nabladown render
 - Offline mode

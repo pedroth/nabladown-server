@@ -4,7 +4,7 @@ import express from "express";
 import { Command } from "commander";
 import { WebSocketServer } from 'ws';
 import { readFile } from "fs/promises";
-import { readdirSync } from "fs";
+import { readdirSync, readFileSync } from "fs";
 import { cwd } from "process";
 import path from "path";
 
@@ -121,6 +121,15 @@ function getBaseHtml(title, script) {
           }
 
           /* to put icon on right side just add flex to header, flex-grow and text-align: end to themeButton */
+      </style>
+      <style>
+      ${(() => {
+      try {
+        return readFileSync(path.join(__dirname, "./index.css"), { encoding: "utf8" })
+      } catch (e) {
+        return "";
+      }
+    })()}
       </style>
     </head>
     <body>
@@ -448,6 +457,7 @@ const hotReloadFile = async (ws, request) => {
 //========================================================================================
 
 const MEDIA_FILES_REGEX = /.*\.(png|jpg|jpeg|webp|gif|svg|bmp|tiff|tif|mp4|webm|ogv|ogg)$/
+const WEB_FILES_REGEX = /.*\.(js)$/
 
 
 const program = new Command();
@@ -463,6 +473,14 @@ program.option("-p, --port <number>", "port number", 3000)
       .httpAction({ regex: /.*\.nd$/, handler: serveNdFile })
       .wsAction({ regex: /.*\.nd$/, handler: hotReloadFile })
       .httpAction({ regex: MEDIA_FILES_REGEX, handler: serveStatic })
+      .httpAction({
+        regex: /.*\/index.css$/,
+        handler: (req, res) => {
+          req.url = "index.css";
+          serveStatic(req, res);
+        }
+      })
+      .httpAction({ regex: WEB_FILES_REGEX, handler: serveStatic })
       .build()
       .start(port)
   })
