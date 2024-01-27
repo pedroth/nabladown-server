@@ -306,16 +306,15 @@ async function serveListOfFiles(_, res) {
 
       function createFoldersList(filesStruct) {
         return \`
-        <ul>
         \${
           filesStruct
           .map(file => 
             file.children.length === 0 ? 
             \`<li><a href="\${file.src}">\${file.name}</a></li>\` :
-              \`<li> \${file.name} \${createFoldersList(file.children)} </li>\`  )
+              \`<details><summary>\${file.name}</summary><ul>\${createFoldersList(file.children)}</ul></details>\`  )
           .join("\\n")
           }
-        </ul>\`
+        \`
       }
 
       const ws = new WebSocket(\`ws://\${window.location.host}\`);
