@@ -390,9 +390,13 @@ function serveNdFile(req, res) {
 
 
 async function serveStatic(req, res) {
-  const fileName = req.url;
-  const file = await readFile(path.join(__dirname, fileName))
-  res.send(file);
+  try {
+    const fileName = req.url;
+    const file = await readFile(path.join(__dirname, fileName))
+    res.send(file);
+  } catch (error) {
+    console.log("Caught exception", error);
+  }
 }
 
 
