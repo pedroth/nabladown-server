@@ -17,8 +17,19 @@ console.log("Running on:", __dirname);
 //========================================================================================
 
 function isNdFile(fileObj) {
-  if (fileObj.children.length === 0) return fileObj.name.split(".nd").length > 1
+  if (fileObj.children.length === 0) return fileObj.name.includes(".nd");
   return fileObj.children.some(isNdFile);
+}
+
+function filterNdFiles(fileObjs) {
+  return fileObjs
+    .filter(isNdFile)
+    .map(f => {
+      if (f.children.length > 0) {
+        f.children = filterNdFiles(f.children);
+      }
+      return f;
+    })
 }
 
 function readFilesNames(dir = "/", level = 3) {
@@ -34,6 +45,15 @@ function readFilesNames(dir = "/", level = 3) {
           readFilesNames(dir + f.name + "/", level - 1)
       };
     });
+}
+
+function areFoldersEqual(foldersA, foldersB) {
+  if (foldersA.length !== foldersB.length) return false;
+  for (let i = 0; i < foldersA.length; i++) {
+    if (foldersA[i].src !== foldersB[i].src) return false;
+    if (!areFoldersEqual(foldersA[i].children, foldersB[i].children)) return false;
+  }
+  return true;
 }
 
 const light_mode_svg = `
@@ -312,18 +332,36 @@ async function serveListOfFiles(_, res) {
       "List of Nabladown files",
       `
       ${LOCAL_STORAGE}
-
-      function createFoldersList(filesStruct) {
-        return \`
+      const detailsIds = [];
+      function createFoldersList(filesStruct, level=0) {
+        const html = \`
         \${
           filesStruct
-          .map(file => 
-            file.children.length === 0 ? 
+          .map(file => {
+            if(file.children.length > 0) detailsIds.push(file.name);
+            return file.children.length === 0 ? 
             \`<li><a href="\${file.src}">\${file.name}</a></li>\` :
-              \`<details><summary>\${file.name}</summary><ul>\${createFoldersList(file.children)}</ul></details>\`  )
+            \`<details id="details_\${file.name}"><summary>\${file.name}</summary><ul>\${createFoldersList(file.children, level + 1)}</ul></details>\`;
+          })
           .join("\\n")
           }
-        \`
+        \`;
+        // maintain state
+        setTimeout(() => {
+          if(level === 0) {
+            detailsIds.forEach(id => {
+              const details = document.getElementById(\`details_\${id}\`);
+              const storageDetailState = NablaLocalStorage.getItem(\`details_\${id}\`);
+              if(storageDetailState) details.open = storageDetailState;
+              details.addEventListener('click', (e) => {
+                if(event.target.tagName !== 'SUMMARY') return;
+                const isOpen = details.open;
+                NablaLocalStorage.setItem(\`details_\${id}\`, !isOpen);
+              })
+            });
+          }
+        })
+        return html;
       }
 
       const ws = new WebSocket(\`ws://\${window.location.host}\`);
@@ -400,14 +438,15 @@ async function serveStatic(req, res) {
 }
 
 
+
+
 const hotReloadListOfFiles = async ws => {
-  const reloadList = async (dir = "/") => readFilesNames(dir)
-    .filter(isNdFile)
+  const reloadList = async (dir = "/") => filterNdFiles(readFilesNames(dir)
     .sort((a, b) => {
       const aName = (a.name || a).toLowerCase();
       const bName = (b.name || b).toLowerCase();
       return aName < bName ? -1 : aName > bName ? 1 : 0;
-    })
+    }))
 
   // first render
   let files = await reloadList();
@@ -419,10 +458,7 @@ const hotReloadListOfFiles = async ws => {
   // hot reloading, node-watch not working
   const id = setInterval(async () => {
     const newFiles = await reloadList();
-    if (
-      newFiles.length !== files.length ||
-      newFiles.map((f, i) => f.src === files[i].src).some(x => !x)
-    ) {
+    if (!areFoldersEqual(files, newFiles)) {
       console.log("Files changed", newFiles);
       files = newFiles;
       ws.send(JSON.stringify(files));
