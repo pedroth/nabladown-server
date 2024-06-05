@@ -4,7 +4,7 @@ import express from "express";
 import { Command } from "commander";
 import { WebSocketServer } from 'ws';
 import { readFile } from "fs/promises";
-import { readdirSync, readFileSync } from "fs";
+import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { cwd } from "process";
 import path from "path";
 
@@ -54,6 +54,19 @@ function areFoldersEqual(foldersA, foldersB) {
     if (!areFoldersEqual(foldersA[i].children, foldersB[i].children)) return false;
   }
   return true;
+}
+
+function debounce(lambda, debounceTimeInMillis = 500) {
+  let timerId;
+  return function (...vars) {
+    if (timerId) {
+      clearTimeout(timerId);
+    }
+    timerId = setTimeout(() => {
+      lambda(...vars);
+    }, debounceTimeInMillis);
+    return true;
+  };
 }
 
 const light_mode_svg = `
@@ -118,6 +131,7 @@ function getBaseHtml(title, script) {
 
           article {
             padding-bottom: 50px;
+            padding-left: 1rem;
           }
 
           #root {
@@ -128,6 +142,10 @@ function getBaseHtml(title, script) {
             height: 100%;
             max-width: 1080px;
             min-width: 333px;
+          }
+
+          #themeButton {
+            max-width: fit-content;
           }
 
           #themeButton svg {
@@ -392,30 +410,54 @@ function serveNdFile(req, res) {
     `
       import { parse, render } from "https://cdn.jsdelivr.net/npm/nabladown.js/dist/web/index.js";
       
+      let isEditable = false;
+      let nablaDoc = "";
+
       ${LOCAL_STORAGE}
+
+      ${debounce.toString().replace("function", "function debounce")}
             
       document.addEventListener("scroll", e => {
         NablaLocalStorage.setItem("scroll", document.documentElement.scrollTop);
       });
+
+      async function renderNabla() {
+        const body = document.getElementById("root");
+        while (body.firstChild) {
+          body.removeChild(body.firstChild);
+        }
+        body.appendChild(await render(parse(nablaDoc)));
+
+        setTimeout(() => {
+          const article = document.getElementsByTagName("article")[0];
+          if(article) {
+            article.setAttribute("contenteditable", true);
+            article.addEventListener('input', debounce(() => {
+              ws.send(document.getElementsByTagName("article")[0].innerText);
+            }));
+            article.addEventListener('focus', () => {
+              article.innerText = nablaDoc;
+              isEditable = true;
+            })
+            article.addEventListener('blur', () => {
+              isEditable = false;
+              renderNabla(nablaDoc)
+            })
+          }
+        })
+      }
       
       const ws = new WebSocket(\`ws://\${window.location.host}\${window.location.pathname}\`);
       ws.addEventListener('open', event => {
         console.log('Connected to the WebSocket server');
         
         ws.addEventListener('message', async event => {
-          console.log("Got message", event.data);
           const previousScroll = NablaLocalStorage.getItem("scroll");
-
-          const body = document.getElementById("root");
-          while (body.firstChild) {
-            body.removeChild(body.firstChild);
-          }
-          body.appendChild(
-            await render(
-              parse(event.data)
-            )
-          );
           document.documentElement.scrollTop = previousScroll;
+          console.log("Got message", event.data);
+          nablaDoc = event.data;
+          if(isEditable) return;
+          await renderNabla(event.data);
         });
         
         ws.addEventListener('close', event => {
@@ -426,7 +468,6 @@ function serveNdFile(req, res) {
   ))
 }
 
-
 async function serveStatic(req, res) {
   try {
     const fileName = req.url;
@@ -436,9 +477,6 @@ async function serveStatic(req, res) {
     console.log("Caught exception", error);
   }
 }
-
-
-
 
 const hotReloadListOfFiles = async ws => {
   const reloadList = async (dir = "/") => filterNdFiles(readFilesNames(dir)
@@ -473,11 +511,18 @@ const hotReloadFile = async (ws, request) => {
   if (!fileName) return;
   fileName = decodeURI(fileName);
 
-  const reloadFile = () => readFile(path.join(__dirname, fileName), { encoding: "utf8" });
+  const filePath = path.join(__dirname, fileName);
+  const reloadFile = () => readFile(filePath, { encoding: "utf8" });
 
   // first render
   let fileContent = await reloadFile();
   ws.send(fileContent);
+
+  // receive edits
+  ws.on("message", (data) => {
+    const fileChanged = data.toString();
+    writeFileSync(filePath, fileChanged);
+  })
 
   // hot reloading
   const id = setInterval(async () => {
