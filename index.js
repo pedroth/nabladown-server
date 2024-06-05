@@ -405,6 +405,9 @@ async function serveListOfFiles(_, res) {
 
 function serveNdFile(req, res) {
   const fileName = req.url;
+  let debounceString = debounce.toString();
+  if (!debounceString.includes("function debounce"))
+    debounceString = debounceString.replace("function", "function debounce");
   res.send(getBaseHtml(
     fileName,
     `
@@ -415,7 +418,7 @@ function serveNdFile(req, res) {
 
       ${LOCAL_STORAGE}
 
-      ${debounce.toString().replace("function", "function debounce")}
+      ${debounceString}
             
       document.addEventListener("scroll", e => {
         NablaLocalStorage.setItem("scroll", document.documentElement.scrollTop);
