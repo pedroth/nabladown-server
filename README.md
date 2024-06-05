@@ -40,6 +40,5 @@ Just create an `index.css` file in your _root_ folder.
 
 # TODO
 
-- Create browser editor
 - Using custom nabladown render
 - Offline mode
