@@ -93,6 +93,34 @@ xmlns="http://www.w3.org/2000/svg"
 /></svg>
 `;
 
+
+const edit_mode_svg = `
+<svg 
+width="24"
+height="24" 
+fill="currentColor" 
+viewBox="0 0 512 512"
+xmlns="http://www.w3.org/2000/svg"
+>
+ <!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.-->
+ <path 
+    d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"
+/></svg>
+`
+
+const no_edit_svg = `
+<svg 
+width="24"
+height="24" 
+fill="currentColor"
+xmlns="http://www.w3.org/2000/svg" 
+viewBox="0 0 384 512"
+>
+  <!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.-->
+  <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"
+/></svg>
+`
+
 function getBaseHtml(title, script) {
   return `
   <!DOCTYPE html>
@@ -134,6 +162,22 @@ function getBaseHtml(title, script) {
             padding-left: 1rem;
           }
 
+          .button {
+            max-width: fit-content;
+          }
+
+          .button svg {
+            cursor: pointer;
+            width: 1.6rem;
+            opacity: 0.3;
+            transition: all var(--faster-transition) ease-in-out;
+          }
+
+          .button svg:hover {
+            transform: rotate(23deg);
+            opacity: 0.9;
+          }
+
           #root {
             opacity: 1;
             transition: opacity var(--fast-transition) ease-in-out;
@@ -144,21 +188,13 @@ function getBaseHtml(title, script) {
             min-width: 333px;
           }
 
-          #themeButton {
-            max-width: fit-content;
+          header {
+            margin-top: 1rem;
+            position: absolute;
+            top: 0;
           }
 
-          #themeButton svg {
-            cursor: pointer;
-            width: 25px;
-            transition: all var(--faster-transition) ease-in-out;
-          }
-          
-          #themeButton svg:hover {
-            transform: rotate(23deg);
-          }
-
-          /* to put icon on right side just add flex to header, flex-grow and text-align: end to themeButton */
+          /* to put icon on right side just add flex to header, flex-grow and text-align: end to button class */
       </style>
       <style>
       ${(() => {
@@ -186,7 +222,7 @@ function getBaseHtml(title, script) {
       let theme = ls.getItem("theme") || "dark";
       const container = document.getElementById("header");
       const button = document.createElement("div");
-      button.setAttribute("id", "themeButton")
+      button.classList.add("button");
 
       const updateTheme = theme => {
         const isDark = theme === "dark";
@@ -413,8 +449,12 @@ function serveNdFile(req, res) {
     `
       import { parse, render } from "https://cdn.jsdelivr.net/npm/nabladown.js/dist/web/index.js";
       
+      const edit_mode_svg = \`${edit_mode_svg}\`;
+      const no_edit_svg = \`${no_edit_svg}\`;
+      
       let isEditable = false;
       let nablaDoc = "";
+
 
       ${LOCAL_STORAGE}
 
@@ -430,24 +470,6 @@ function serveNdFile(req, res) {
           body.removeChild(body.firstChild);
         }
         body.appendChild(await render(parse(nablaDoc)));
-
-        setTimeout(() => {
-          const article = document.getElementsByTagName("article")[0];
-          if(article) {
-            article.setAttribute("contenteditable", true);
-            article.addEventListener('input', debounce(() => {
-              ws.send(document.getElementsByTagName("article")[0].innerText);
-            }));
-            article.addEventListener('focus', () => {
-              article.innerText = nablaDoc;
-              isEditable = true;
-            })
-            article.addEventListener('blur', () => {
-              isEditable = false;
-              renderNabla(nablaDoc)
-            })
-          }
-        })
       }
       
       const ws = new WebSocket(\`ws://\${window.location.host}\${window.location.pathname}\`);
@@ -467,6 +489,39 @@ function serveNdFile(req, res) {
           console.log('Disconnected from the WebSocket server');
         });
       });
+
+      function addEditButton() {
+        const container = document.getElementById("header");
+        const button = document.createElement("div");
+        button.classList.add("button");
+
+        const updateEditMode = () => {
+          button.innerHTML = !isEditable ? edit_mode_svg : no_edit_svg;
+          const article = document.getElementsByTagName("article")[0];
+          if(article) {
+            if(isEditable) {
+              article.innerText = nablaDoc;
+              article.setAttribute("contenteditable", true);
+              article.addEventListener('input', debounce(() => {
+                ws.send(document.getElementsByTagName("article")[0].innerText);
+              }));
+              article.focus();
+            } else {
+              renderNabla(nablaDoc);
+            }
+          }
+        }
+
+        updateEditMode();
+        // add click event
+        button.addEventListener("click", _ => {
+          isEditable = !isEditable;
+          updateEditMode();
+        })
+        container.appendChild(button);
+      }
+
+      addEditButton();
       `
   ))
 }
