@@ -190,7 +190,7 @@ function getBaseHtml(title, script) {
 
           header {
             margin-top: 1rem;
-            position: absolute;
+            position: fixed;
             top: 0;
           }
 
@@ -497,6 +497,7 @@ function serveNdFile(req, res) {
 
         const updateEditMode = () => {
           button.innerHTML = !isEditable ? edit_mode_svg : no_edit_svg;
+          button.title = isEditable ? "Shift+Enter to submit" : "Press E to edit";
           const article = document.getElementsByTagName("article")[0];
           if(article) {
             if(isEditable) {
@@ -505,11 +506,30 @@ function serveNdFile(req, res) {
               article.addEventListener('input', debounce(() => {
                 ws.send(document.getElementsByTagName("article")[0].innerText);
               }));
+              article.addEventListener('keydown', function(event) {
+                if (event.key === 'Tab') {
+                  event.preventDefault();
+                  }
+                if (event.key === 'Enter' && event.shiftKey) {
+                    isEditable = !isEditable;
+                    updateEditMode();
+                }
+              });
               article.focus();
             } else {
               renderNabla(nablaDoc);
             }
           }
+
+          window.addEventListener('keydown', () => {
+            if (
+              !isEditable &&
+              event.key === 'e'
+            ) {
+                isEditable = !isEditable;
+                setTimeout(() => updateEditMode(), 100);
+            }
+          })
         }
 
         updateEditMode();
