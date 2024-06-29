@@ -627,7 +627,7 @@ const program = new Command();
 program
   .name('nabladown-server')
   .description('Serving nabladown(.nd) files rendered with hot reload')
-  .version('1.0.0');
+  .version('1.0.40');
 program.option("-p, --port <number>", "port number", 3000)
   .action(({ port }) => {
     Server.builder()
