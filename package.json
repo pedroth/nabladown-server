@@ -34,7 +34,7 @@
     "build": "bun build ./index.js --compile --outfile nd-server",
     "test": "bun test",
     "clean": "rm -rf node_modules; rm -rf nd-server",
-    "pub": "npm version patch; npm publish",
+    "pub": "npm version patch; npm publish; git push origin $(git describe --tags `git rev-list --tags --max-count=1`)",
     "build-windows": "bun build --compile --target=bun-windows-x64 ./index.js --outfile nabladown-server",
     "build-linux": "bun build --compile --target=bun-linux-x64 ./index.js --outfile nabladown-server"
   }

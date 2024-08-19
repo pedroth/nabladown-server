@@ -41,7 +41,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: nabladown-server-${{ matrix.os }}
-          path: ./dist/nabladown-server  # Adjust the path if necessary
+          path: ./nabladown-server  # Adjust the path if necessary
 
   release:
     needs: build  # Wait for the build job to complete
