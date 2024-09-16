@@ -1,5 +1,10 @@
 name: Build and Release
 
+permissions:
+  contents: write  # Permissions to create a release and push contents
+  actions: write   # Permissions for actions
+  packages: write  # Permissions to upload release assets
+
 on:
   push:
     tags:
@@ -64,8 +69,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref }}  # Tag that triggered the workflow
+          release_name: Release ${{ github.ref }}  # Name of the release
           draft: false
           prerelease: false
 
