@@ -35,7 +35,7 @@ jobs:
             ls -la nabladown-server
           } else {
             bun run build-windows
-            ls -la nabladown-server.exe
+            Get-ChildItem -Force nabladown-server.exe | Select-Object Mode,Length,LastWriteTime,Name
           }
         shell: pwsh
 

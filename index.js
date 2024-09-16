@@ -629,7 +629,7 @@ const program = new Command();
 program
   .name('nabladown-server')
   .description('Serving nabladown(.nd) files rendered with hot reload')
-  .version('1.0.47');
+  .version('1.0.50');
 program.option("-p, --port <number>", "port number", 3000)
 program.option('-no-css, --no-css', 'Disable local index.css', true) // commader negate var syntax
   .action(({ port }) => {
