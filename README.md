@@ -35,6 +35,8 @@ The above command will run the server on port `8080`.
 
 Just create an `index.css` file in your _root_ folder.
 
+To disable this default behavior, just run: `npx nabladown-server -no-css`
+
 
 [nabla]: https://pedroth.github.io/nabladown.js
 

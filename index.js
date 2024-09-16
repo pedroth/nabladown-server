@@ -199,7 +199,9 @@ function getBaseHtml(title, script) {
       <style>
       ${(() => {
       try {
-        return readFileSync(path.join(__dirname, "./index.css"), { encoding: "utf8" })
+        if (program.opts().css) {
+          return readFileSync(path.join(__dirname, "./index.css"), { encoding: "utf8" })
+        }
       } catch (e) {
         return "";
       }
@@ -627,8 +629,9 @@ const program = new Command();
 program
   .name('nabladown-server')
   .description('Serving nabladown(.nd) files rendered with hot reload')
-  .version('1.0.40');
+  .version('1.0.47');
 program.option("-p, --port <number>", "port number", 3000)
+program.option('-no-css, --no-css', 'Disable local index.css', true) // commader negate var syntax
   .action(({ port }) => {
     Server.builder()
       .httpAction({ path: "/", handler: serveListOfFiles })
@@ -636,15 +639,8 @@ program.option("-p, --port <number>", "port number", 3000)
       .httpAction({ regex: /.*\.nd$/, handler: serveNdFile })
       .wsAction({ regex: /.*\.nd$/, handler: hotReloadFile })
       .httpAction({ regex: MEDIA_FILES_REGEX, handler: serveStatic })
-      .httpAction({
-        regex: /.*\/index.css$/,
-        handler: (req, res) => {
-          req.url = "index.css";
-          serveStatic(req, res);
-        }
-      })
       .httpAction({ regex: WEB_FILES_REGEX, handler: serveStatic })
       .build()
       .start(port)
   })
-program.parse();
+program.parse(process.argv);
