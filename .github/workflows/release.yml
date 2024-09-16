@@ -7,85 +7,83 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]  # Define both OS for matrix builds
+        os: [ubuntu-latest, windows-latest]
 
     env:
       ACTIONS_RUNNER_DEBUG: true
       ACTIONS_STEP_DEBUG: true
 
     steps:
-      # Step 1: Check out the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Bun
       - name: Set up Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: 'latest'
 
-      # Step 3: Install dependencies
       - name: Install dependencies
         run: bun install
 
-      # Step 4: Build for the respective OS
       - name: Build Nabladown Server
         run: |
-          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
             bun run build-linux
+            mv ./path/to/linux/output nabladown-server
           else
             bun run build-windows
+            mv ./path/to/windows/output nabladown-server.exe
           fi
 
-      # Step 5: Upload the artifacts
       - name: Upload Nabladown Server Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: nabladown-server
-          path: ./  # Adjust the path if necessary
+          name: nabladown-server-${{ matrix.os }}
+          path: |
+            nabladown-server
+            nabladown-server.exe
 
   release:
-    needs: build  # Wait for the build job to complete
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the code (again, needed for the release creation)
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Create a GitHub release
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}  # Use the current tag
+          tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
 
-      # Step 3: Upload the Linux artifact to the release
       - name: Upload Linux Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./  # Adjust the path
-          asset_name: nabladown-server
+          asset_path: ./nabladown-server-ubuntu-latest/nabladown-server
+          asset_name: nabladown-server-linux
           asset_content_type: application/octet-stream
 
-      # Step 4: Upload the Windows artifact to the release
       - name: Upload Windows Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./  # Adjust the path
-          asset_name: nabladown-server.exe
+          asset_path: ./nabladown-server-windows-latest/nabladown-server.exe
+          asset_name: nabladown-server-windows.exe
           asset_content_type: application/octet-stream
