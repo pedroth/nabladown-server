@@ -32,12 +32,15 @@ jobs:
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
             bun run build-linux
-            mv ./path/to/linux/output nabladown-server
+            # No need to move, output is already nabladown-server
+            ls -la nabladown-server
           else
             bun run build-windows
-            mv ./path/to/windows/output nabladown-server.exe
+            # No need to move, output is already nabladown-server.exe
+            ls -la nabladown-server.exe
           fi
 
+      # Upload the Nabladown Server artifacts
       - name: Upload Nabladown Server Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -69,21 +72,23 @@ jobs:
           prerelease: false
 
       - name: Upload Linux Release Asset
+        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nabladown-server-ubuntu-latest/nabladown-server
+          asset_path: ./nabladown-server
           asset_name: nabladown-server-linux
           asset_content_type: application/octet-stream
 
       - name: Upload Windows Release Asset
+        if: matrix.os == 'windows-latest'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nabladown-server-windows-latest/nabladown-server.exe
+          asset_path: ./nabladown-server.exe
           asset_name: nabladown-server-windows.exe
           asset_content_type: application/octet-stream
