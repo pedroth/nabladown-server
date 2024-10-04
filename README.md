@@ -6,6 +6,11 @@ Nabladown server is a computer application that lets you view [nabladown][nabla]
 
 # Quick start
 
+## Executable (windows and linux)
+
+Download the lastest executable from the [release page](https://github.com/pedroth/nabladown-server/releases), and run it.
+## npx
+
 The simplest way to run this is to use `npx` in a folder with [nabladown files][nabla]:
 
 `npx nabladown-server`
@@ -14,7 +19,8 @@ Then open browser at `http://localhost:3000`. It will display a list of all `.nd
 
 Then use any editor to change your files. The documents will update accordingly.
 
-## Using bun
+## bunx
+
 You can also use `bunx`
 
 `bunx nabladown-server`
