@@ -503,7 +503,8 @@ function serveNdFile(req, res) {
           const article = document.getElementsByTagName("article")[0];
           if(article) {
             if(isEditable) {
-              article.innerText = nablaDoc;
+              article.innerText = nablaDoc; // Preserve original whitespace
+              article.style.whiteSpace = 'pre-wrap'; // Preserve whitespace in display
               article.setAttribute("contenteditable", true);
               article.addEventListener('input', debounce(() => {
                 ws.send(document.getElementsByTagName("article")[0].innerText);
@@ -511,7 +512,16 @@ function serveNdFile(req, res) {
               article.addEventListener('keydown', function(event) {
                 if (event.key === 'Tab') {
                   event.preventDefault();
-                  }
+                  const selection = window.getSelection();
+                  const range = selection.getRangeAt(0);
+                  const tabNode = document.createTextNode('\t');
+                  range.insertNode(tabNode);
+                  range.setStartAfter(tabNode);
+                  range.setEndAfter(tabNode);
+                  selection.removeAllRanges();
+                  selection.addRange(range);
+                  ws.send(article.innerText);
+                }
                 if (event.key === 'Enter' && event.shiftKey) {
                     isEditable = !isEditable;
                     updateEditMode();

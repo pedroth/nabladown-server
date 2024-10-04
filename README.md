@@ -42,5 +42,11 @@ To disable this default behavior, just run: `npx nabladown-server -no-css`
 
 # TODO
 
-- Using custom nabladown render
 - Offline mode
+- Low priority
+	- Create files
+	- Delete files
+	- Rename files
+	- Create folders
+	- Delete folders
+	- Rename folders
