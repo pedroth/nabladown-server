@@ -480,11 +480,11 @@ function serveNdFile(req, res) {
         
         ws.addEventListener('message', async event => {
           const previousScroll = NablaLocalStorage.getItem("scroll");
-          document.documentElement.scrollTop = previousScroll;
           console.log("Got message", event.data);
           nablaDoc = event.data;
           if(isEditable) return;
           await renderNabla(event.data);
+          document.documentElement.scrollTop = previousScroll
         });
         
         ws.addEventListener('close', event => {
@@ -497,7 +497,7 @@ function serveNdFile(req, res) {
         const button = document.createElement("div");
         button.classList.add("button");
 
-        const updateEditMode = () => {
+        const updateEditMode = async () => {
           button.innerHTML = !isEditable ? edit_mode_svg : no_edit_svg;
           button.title = isEditable ? "Shift+Enter to submit" : "Press E to edit";
           const article = document.getElementsByTagName("article")[0];
@@ -529,7 +529,9 @@ function serveNdFile(req, res) {
               });
               article.focus();
             } else {
-              renderNabla(nablaDoc);
+             const previousScroll = NablaLocalStorage.getItem("scroll");
+             await renderNabla(nablaDoc);
+             document.documentElement.scrollTop = previousScroll
             }
           }
 
