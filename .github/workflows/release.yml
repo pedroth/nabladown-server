@@ -85,33 +85,29 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: List downloaded artifacts
+        run: ls -R
+
+      - name: Prepare assets
+        run: |
+          cp ./nabladown-server-ubuntu-latest/nabladown-server ./nabladown-server-linux
+          cp ./nabladown-server-windows-latest/nabladown-server.exe ./nabladown-server-windows.exe
+
+      - name: Debug information
+        run: |
+          echo "Tag: ${{ github.ref_name }}"
+          echo "Release name: Release ${{ github.ref_name }}"
+          echo "Files to upload:"
+          echo "./nabladown-server-linux"
+          echo "./nabladown-server-windows.exe"
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
-
-      - name: Upload Linux Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nabladown-server-ubuntu-latest/nabladown-server
-          asset_name: nabladown-server-linux
-          asset_content_type: application/octet-stream
-
-      - name: Upload Windows Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nabladown-server-windows-latest/nabladown-server.exe
-          asset_name: nabladown-server-windows.exe
-          asset_content_type: application/octet-stream
+          files: |
+            ./nabladown-server-linux
+            ./nabladown-server-windows.exe
