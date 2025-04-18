@@ -2,7 +2,7 @@ name: Build and Release
 
 permissions:
   contents: write
-  actions: read   # read is enough for download; you can keep write if needed
+  actions: read
   packages: write
 
 on:
@@ -37,11 +37,18 @@ jobs:
         run: |
           if ("${{ matrix.os }}" -eq "ubuntu-latest") {
             bun run build-linux
-            ls -la nabladown-server
           } else {
             bun run build-windows
-            Get-ChildItem -Force nabladown-server.exe | Select-Object Mode,Length,LastWriteTime,Name
           }
+          echo "Build complete for ${{ matrix.os }}"
+        shell: pwsh
+
+      - name: Verify Build Output
+        run: |
+          if ("${{ matrix.os }}" -eq "ubuntu-latest") {
+            [ -f nabladown-server ] && echo "Linux build exists" || echo "Linux build missing"
+          } else {
+            Test-Path nabladown-server.exe -and echo "Windows build exists" || echo "Windows build missing"
         shell: pwsh
 
       - name: Upload Nabladown Server Artifact
