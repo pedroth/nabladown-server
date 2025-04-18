@@ -8,7 +8,7 @@ permissions:
 on:
   push:
     tags:
-      - 'v*'  # Triggers the workflow on version tags like v1.0.0
+      - 'v*'
 
 jobs:
   build:
@@ -35,29 +35,39 @@ jobs:
 
       - name: Build Nabladown Server
         run: |
-          if ("${{ matrix.os }}" -eq "ubuntu-latest") {
+          if ($env:RUNNER_OS -eq "Linux") {
             bun run build-linux
           } else {
             bun run build-windows
           }
-          echo "Build complete for ${{ matrix.os }}"
+          Write-Host "Build complete for $env:RUNNER_OS"
         shell: pwsh
 
       - name: Verify Build Output
         run: |
-          if ("${{ matrix.os }}" -eq "ubuntu-latest") {
-            [ -f nabladown-server ] && echo "Linux build exists" || echo "Linux build missing"
+          if ($env:RUNNER_OS -eq "Linux") {
+            if (Test-Path ./nabladown-server) {
+              Write-Host "✅ Linux build exists"
+            } else {
+              Write-Error "❌ Linux build missing"
+            }
           } else {
-            Test-Path nabladown-server.exe -and echo "Windows build exists" || echo "Windows build missing"
+            if (Test-Path ./nabladown-server.exe) {
+              Write-Host "✅ Windows build exists"
+            } else {
+              Write-Error "❌ Windows build missing"
+            }
+          }
         shell: pwsh
 
       - name: Debug Artifacts
         run: |
-          ls -la
-          echo "Current directory: $PWD"
+          Get-ChildItem -Force
+          Write-Host "Current directory: $PWD"
+        shell: pwsh
 
       - name: Upload Nabladown Server Artifact
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4
         with:
           name: nabladown-server-${{ matrix.os }}
           path: |
@@ -73,7 +83,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v3.1.2
+        uses: actions/download-artifact@v4
 
       - name: Create GitHub Release
         id: create_release
@@ -81,8 +91,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}  # Tag that triggered the workflow
-          release_name: Release ${{ github.ref }}  # Name of the release
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
 
