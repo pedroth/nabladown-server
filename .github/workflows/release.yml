@@ -1,9 +1,9 @@
 name: Build and Release
 
 permissions:
-  contents: write  # Permissions to create a release and push contents
-  actions: write   # Permissions for actions
-  packages: write  # Permissions to upload release assets
+  contents: write
+  actions: read   # read is enough for download; you can keep write if needed
+  packages: write
 
 on:
   push:
