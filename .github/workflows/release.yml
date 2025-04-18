@@ -51,8 +51,13 @@ jobs:
             Test-Path nabladown-server.exe -and echo "Windows build exists" || echo "Windows build missing"
         shell: pwsh
 
+      - name: Debug Artifacts
+        run: |
+          ls -la
+          echo "Current directory: $PWD"
+
       - name: Upload Nabladown Server Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: nabladown-server-${{ matrix.os }}
           path: |
@@ -68,7 +73,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v3.1.2
 
       - name: Create GitHub Release
         id: create_release
