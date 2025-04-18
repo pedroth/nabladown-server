@@ -627,7 +627,7 @@ async function serveStatic(req, res) {
   }
 }
 
-const HOT_RELOAD_INTERVAL = 100;
+const HOT_RELOAD_INTERVAL = 500;
 const hotReloadListOfFiles = async ws => {
   const reloadList = async (dir = "/") => filterNdFiles(readFilesNames(dir)
     .sort((a, b) => {
