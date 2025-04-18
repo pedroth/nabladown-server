@@ -6,7 +6,7 @@ import { WebSocketServer } from 'ws';
 import { readFile } from "fs/promises";
 import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { cwd } from "process";
-import path from "path";
+import { normalize, join } from "path";
 
 const __dirname = cwd();
 console.log("Running on:", __dirname);
@@ -34,7 +34,7 @@ function filterNdFiles(fileObjs) {
 
 function readFilesNames(dir = "/", level = 3) {
   if (level === 0) return [];
-  return readdirSync(path.join(__dirname, dir), { withFileTypes: true })
+  return readdirSync(join(__dirname, dir), { withFileTypes: true })
     .filter(f => !f.name.match(/^\..*/))
     .map(f => {
       return {
@@ -121,6 +121,17 @@ viewBox="0 0 384 512"
 /></svg>
 `
 
+const worker_code = `
+import { parse } from "https://cdn.jsdelivr.net/npm/nabladown.js/dist/web/index.js";
+
+self.onmessage = function(e) {
+  console.log("Got message from main", e.data)
+  const input = e.data;
+  const parsed = parse(input);
+  self.postMessage(parsed);
+};
+`
+
 function getBaseHtml(title, script) {
   return `
   <!DOCTYPE html>
@@ -194,13 +205,35 @@ function getBaseHtml(title, script) {
             top: 0;
           }
 
+          .loading-spinner {
+            border: 4px solid #444;
+            border-top: 4px solid #f0f0f0;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+          }
+
+          .loading-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+          }
+
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+
           /* to put icon on right side just add flex to header, flex-grow and text-align: end to button class */
       </style>
       <style>
       ${(() => {
       try {
         if (program.opts().css) {
-          return readFileSync(path.join(__dirname, "./index.css"), { encoding: "utf8" })
+          return readFileSync(join(__dirname, "./index.css"), { encoding: "utf8" })
         }
       } catch (e) {
         return "";
@@ -449,7 +482,7 @@ function serveNdFile(req, res) {
   res.send(getBaseHtml(
     fileName,
     `
-      import { parse, render } from "https://cdn.jsdelivr.net/npm/nabladown.js/dist/web/index.js";
+      import { render } from "https://cdn.jsdelivr.net/npm/nabladown.js/dist/web/index.js";
       
       const edit_mode_svg = \`${edit_mode_svg}\`;
       const no_edit_svg = \`${no_edit_svg}\`;
@@ -457,21 +490,38 @@ function serveNdFile(req, res) {
       let isEditable = false;
       let nablaDoc = "";
 
-
       ${LOCAL_STORAGE}
 
       ${debounceString}
+
+      //---- WORKER
+
+      const workerCode = \`${worker_code}\`
+
+      const blob = new Blob([workerCode], { type: 'application/javascript' });
+      const worker = new Worker(URL.createObjectURL(blob), {type: "module"});
+      worker.onmessage = async function(e) {
+       console.log("Got message from worker", e.data);
+       const root = document.getElementById("root");
+       while (root.firstChild) {
+          root.removeChild(root.firstChild);
+       }
+       root.appendChild(await render(e.data));
+      };
+
+      //----
             
       document.addEventListener("scroll", e => {
         NablaLocalStorage.setItem("scroll", document.documentElement.scrollTop);
       });
 
-      async function renderNabla() {
-        const body = document.getElementById("root");
-        while (body.firstChild) {
-          body.removeChild(body.firstChild);
+      async function renderNabla(doc) {
+        const root = document.getElementById("root");
+        while (root.firstChild) {
+          root.removeChild(root.firstChild);
         }
-        body.appendChild(await render(parse(nablaDoc)));
+        worker.postMessage(doc);
+        root.innerHTML = '<div class="loading-container"><div class="loading-spinner"></div></div>'
       }
       
       const ws = new WebSocket(\`ws://\${window.location.host}\${window.location.pathname}\`);
@@ -491,6 +541,7 @@ function serveNdFile(req, res) {
           console.log('Disconnected from the WebSocket server');
         });
       });
+
 
       function addEditButton() {
         const container = document.getElementById("header");
@@ -562,14 +613,21 @@ function serveNdFile(req, res) {
 
 async function serveStatic(req, res) {
   try {
-    const fileName = req.url;
-    const file = await readFile(path.join(__dirname, fileName))
+    // Normalize and ensure the resolved path stays inside __dirname
+    const rawPath = decodeURIComponent(req.url);
+    const fullPath = normalize(join(__dirname, rawPath));
+    if (!fullPath.startsWith(__dirname)) {
+      return res.sendStatus(403);
+    }
+    const file = await readFile(fullPath);
     res.send(file);
   } catch (error) {
-    console.log("Caught exception", error);
+    console.error("serveStatic error:", error);
+    res.sendStatus(404);
   }
 }
 
+const HOT_RELOAD_INTERVAL = 100;
 const hotReloadListOfFiles = async ws => {
   const reloadList = async (dir = "/") => filterNdFiles(readFilesNames(dir)
     .sort((a, b) => {
@@ -593,7 +651,7 @@ const hotReloadListOfFiles = async ws => {
       files = newFiles;
       ws.send(JSON.stringify(files));
     }
-  }, 100);
+  }, HOT_RELOAD_INTERVAL);
 
   return () => clearInterval(id);
 }
@@ -603,8 +661,14 @@ const hotReloadFile = async (ws, request) => {
   if (!fileName) return;
   fileName = decodeURI(fileName);
 
-  const filePath = path.join(__dirname, fileName);
-  const reloadFile = () => readFile(filePath, { encoding: "utf8" });
+  const filePath = join(__dirname, fileName);
+  const reloadFile = async () => {
+    try{
+      return await readFile(filePath, { encoding: "utf8" });
+    } catch(e) {
+      return `# File \`${filePath}\` not found!\n`
+    }
+  }
 
   // first render
   let fileContent = await reloadFile();
@@ -623,7 +687,7 @@ const hotReloadFile = async (ws, request) => {
       fileContent = newFileContent;
       ws.send(fileContent);
     }
-  }, 0)
+  }, HOT_RELOAD_INTERVAL)
   return () => clearInterval(id);
 }
 
