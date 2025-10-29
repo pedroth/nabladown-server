@@ -8,6 +8,8 @@ import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { cwd } from "process";
 import { normalize, join } from "path";
 
+const ND_VERSION="4.0.5"
+
 const __dirname = cwd();
 console.log("Running on:", __dirname);
 //========================================================================================
@@ -120,12 +122,14 @@ viewBox="0 0 384 512"
 `;
 
 const worker_code = `
-import { parse } from "https://cdn.jsdelivr.net/npm/nabladown.js/dist/web/index.js";
+import { parse } from "https://cdn.jsdelivr.net/npm/nabladown.js@${ND_VERSION}/dist/web/index.js";
 
 self.onmessage = function(e) {
   console.log("Got message from main", e.data)
   const input = e.data;
+  const startTime = performance.now();
   const parsed = parse(input);
+  console.log("Time to parse(s):", (1e-3 * (performance.now()-startTime)).toFixed(3))
   self.postMessage(parsed);
 };
 `;
@@ -490,7 +494,7 @@ function serveNdFile(req, res) {
     getBaseHtml(
       fileName,
       `
-      import { render } from "https://cdn.jsdelivr.net/npm/nabladown.js/dist/web/index.js";
+      import { render } from "https://cdn.jsdelivr.net/npm/nabladown.js@${ND_VERSION}/dist/web/index.js";
 
       const edit_mode_svg = \`${edit_mode_svg}\`;
       const no_edit_svg = \`${no_edit_svg}\`;
@@ -503,6 +507,107 @@ function serveNdFile(req, res) {
 
       ${debounceString}
 
+      // ---- INDEXEDDB CACHE
+
+      const DB_NAME = 'nabla-cache-db';
+      const STORE_NAME = 'nabla-docs';
+
+      function openDB() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(DB_NAME, 1);
+
+          request.onerror = (event) => {
+            console.error("IndexedDB error:", event.target.errorCode);
+            reject("IndexedDB error");
+          };
+
+          request.onsuccess = (event) => {
+            resolve(event.target.result);
+          };
+
+          request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            // Create an object store to hold information about our Nabladown documents.
+            // The keyPath is set to null, and we won't use autoIncrement, as the 'doc' content itself will be the key.
+            db.createObjectStore(STORE_NAME);
+          };
+        });
+      }
+
+      /**
+       * Saves the parsed AST to IndexedDB using the document content as the key.
+       * @param {string} doc - The raw Nabladown document content (used as the key).
+       * @param {object} ast - The parsed Abstract Syntax Tree (the value to be cached).
+       */
+      async function saveInLocalDB(doc, ast) {
+        try {
+          const db = await openDB();
+          const transaction = db.transaction([STORE_NAME], "readwrite");
+          const store = transaction.objectStore(STORE_NAME);
+          
+          // Put the AST object into the store with the raw document content as the key
+          const request = store.put(ast, doc);
+
+          request.onsuccess = () => {
+            // console.log("AST saved to IndexedDB successfully.");
+          };
+
+          request.onerror = (event) => {
+            console.error("Error saving AST to IndexedDB:", event.target.errorCode);
+          };
+
+          return new Promise(resolve => transaction.oncomplete = resolve);
+
+        } catch (error) {
+          console.warn("Could not open IndexedDB to save cache.", error);
+        }
+      }
+
+      /**
+       * Retrieves the cached AST from IndexedDB using the document content as the key.
+       * @param {string} doc - The raw Nabladown document content (used as the key).
+       * @returns {Promise<object|null>} The cached AST or null if not found.
+       */
+      async function getFromLocalDB(doc) {
+        try {
+          const db = await openDB();
+          const transaction = db.transaction([STORE_NAME], "readonly");
+          const store = transaction.objectStore(STORE_NAME);
+          
+          // Get the AST object from the store using the raw document content as the key
+          const request = store.get(doc);
+
+          return new Promise((resolve) => {
+            request.onsuccess = (event) => {
+              // event.target.result is the AST or undefined if not found
+              resolve(event.target.result || null); 
+            };
+
+            request.onerror = (event) => {
+              console.error("Error retrieving AST from IndexedDB:", event.target.errorCode);
+              resolve(null);
+            };
+          });
+
+        } catch (error) {
+          console.warn("Could not open IndexedDB to retrieve cache.", error);
+          return null;
+        }
+      }
+
+      async function renderNabla(ast) {
+        const previousScroll = NablaLocalStorage.getItem("scroll");
+        const root = document.getElementById("root");
+        while (root.firstChild) {
+          root.removeChild(root.firstChild);
+        }
+        root.appendChild(await render(ast));
+        isLoading = false;
+        document.documentElement.scrollTop = previousScroll
+      }
+
+      //----
+
       //---- WORKER
 
       const workerCode = \`${worker_code}\`
@@ -510,15 +615,9 @@ function serveNdFile(req, res) {
       const blob = new Blob([workerCode], { type: 'application/javascript' });
       const worker = new Worker(URL.createObjectURL(blob), {type: "module"});
       worker.onmessage = async function(e) {
-       const previousScroll = NablaLocalStorage.getItem("scroll");
-       console.log("Got message from worker", e.data);
-       const root = document.getElementById("root");
-       while (root.firstChild) {
-          root.removeChild(root.firstChild);
-       }
-       root.appendChild(await render(e.data));
-       isLoading = false;
-       document.documentElement.scrollTop = previousScroll
+       console.log("Got message from worker", e.data, nablaDoc);
+       await saveInLocalDB(nablaDoc, e.data);
+       renderNabla(e.data);
       };
 
       //----
@@ -546,6 +645,12 @@ function serveNdFile(req, res) {
           console.log("Got message", event.data);
           nablaDoc = event.data;
           if(isEditable) return;
+          const cachedValue = await getFromLocalDB(nablaDoc);
+          if(cachedValue) {
+            console.log("Using cached value from IndexedDB");
+            renderNabla(cachedValue);
+            return;
+          }
           await genNabla(event.data);
         });
 
