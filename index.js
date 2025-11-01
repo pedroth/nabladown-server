@@ -8,7 +8,7 @@ import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { cwd } from "process";
 import { normalize, join } from "path";
 
-const ND_VERSION="4.0.5"
+const ND_VERSION = "4.0.5"
 
 const __dirname = cwd();
 console.log("Running on:", __dirname);
@@ -603,7 +603,10 @@ function serveNdFile(req, res) {
         }
         root.appendChild(await render(ast));
         isLoading = false;
-        document.documentElement.scrollTop = previousScroll
+
+        setTimeout(() => {
+          document.documentElement.scrollTop = previousScroll ?? 0;
+        }, 100);
       }
 
       //----
