@@ -8,7 +8,7 @@ import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { cwd } from "process";
 import { normalize, join } from "path";
 
-const ND_VERSION = "4.1.7";
+const ND_VERSION = "4.1.8";
 
 const __dirname = cwd();
 console.log("Running on:", __dirname);
