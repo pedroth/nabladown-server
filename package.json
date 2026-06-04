@@ -18,10 +18,10 @@
     "eslint": "^8.50.0"
   },
   "bugs": {
-    "url": "https://github.com/pedroth/jsLib/issues"
+    "url": "https://github.com/pedroth/nabladown-server/issues"
   },
   "description": "Hot reloading nabladown files",
-  "homepage": "https://github.com/pedroth/jsLib#readme",
+  "homepage": "https://github.com/pedroth/nabladown-server#readme",
   "keywords": [
     "javascript",
     "nabladown.js",

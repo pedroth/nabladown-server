@@ -668,9 +668,16 @@ function serveNdFile(req, res) {
         const button = document.createElement("div");
         button.classList.add("button");
 
+        const isCtrlOrMetaPressed = (event) => event.ctrlKey || event.metaKey;
+        const isPlainChord = (event) => !event.altKey && !event.shiftKey;
+        const isEditShortcut = (event) =>
+          isCtrlOrMetaPressed(event) && isPlainChord(event) && event.code === 'KeyE';
+        const isSaveShortcut = (event) =>
+          isCtrlOrMetaPressed(event) && isPlainChord(event) && event.code === 'KeyS';
+
         const updateEditMode = async () => {
           button.innerHTML = !isEditable ? edit_mode_svg : no_edit_svg;
-          button.title = isEditable ? "Shift+Enter to submit" : "Press E to edit";
+          button.title = isEditable ? "Ctrl+S to submit" : "Press Ctrl+E to edit";
           const article = document.getElementsByTagName("article")[0];
           if(article) {
             if(isEditable) {
@@ -693,7 +700,8 @@ function serveNdFile(req, res) {
                   selection.addRange(range);
                   ws.send(article.innerText);
                 }
-                if (event.key === 'Enter' && event.shiftKey) {
+                if (isSaveShortcut(event)) {
+                    event.preventDefault();
                     isEditable = !isEditable;
                     updateEditMode();
                 }
@@ -705,17 +713,17 @@ function serveNdFile(req, res) {
              document.documentElement.scrollTop = previousScroll
             }
           }
-
-          window.addEventListener('keydown', () => {
-            if (
-              !isEditable &&
-              event.key === 'e'
-            ) {
-                isEditable = !isEditable;
-                setTimeout(() => updateEditMode(), 100);
-            }
-          })
         }
+
+        window.addEventListener('keydown', (event) => {
+          if (!isEditable && isEditShortcut(event)) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation?.();
+            isEditable = !isEditable;
+            setTimeout(() => updateEditMode(), 100);
+          }
+        }, { capture: true });
 
         updateEditMode();
         // add click event
